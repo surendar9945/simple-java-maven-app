@@ -1,29 +1,32 @@
 pipeline {
-    agent {
-        docker {
-            image 'maven:3-alpine'
-            args '-v /root/.m2:/root/.m2'
-        }
-    }
+    agent any
     stages {
-        stage('Build') {
+        stage ("git clone") {
             steps {
-                sh 'mvn -B -DskipTests clean package'
-            }
+                git url: 'https://github.com/surendar9945/simple-java-maven-app.git'
+            }    
         }
-        stage('Test') {
+
+        stage ("Build") {
             steps {
-                sh 'mvn test'
-            }
-            post {
-                always {
-                    junit 'target/surefire-reports/*.xml'
+                script {
+                   sh  "mvn clean install"
                 }
             }
         }
-        stage('Deliver') {
+
+        stage ("CD") {
             steps {
-                sh './jenkins/scripts/deliver.sh'
+                script {
+                    sh ""
+                    //sh "ansible-playbook -i {{inventory_name}} playbook"
+                }
+            }
+        }
+        
+        stage ("notify") {
+            steps {
+                emailext body: 'this is status of job "${BUILD_URL}"', subject: 'Job Status', to: 'msurendar451@gmail.com'
             }
         }
     }
